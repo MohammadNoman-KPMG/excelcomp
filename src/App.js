@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import ExcelViewer from './ExcelComponent';
+import ExcelViewer from './ExcelComponent/index.ts';
 
 function App() {
   return (
