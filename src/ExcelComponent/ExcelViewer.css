@@ -226,6 +226,17 @@
   color: #000000 !important;
 }
 
+.excel-grid .rdg-row:hover .rdg-cell[aria-colindex="1"] {
+  background-color: #e9ecef !important;
+}
+
+/* Additional text color override for all cell content */
+.excel-grid .rdg-cell input,
+.excel-grid .rdg-cell div,
+.excel-grid .rdg-cell span {
+  color: #000000 !important;
+}
+
 /* Grid lines */
 .excel-grid .rdg-viewport {
   background-image: 

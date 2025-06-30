@@ -32,7 +32,7 @@ This is a sample markdown table that will be converted to Excel view.`);
 
   // Parse markdown tables to extract data
   const parseMarkdownTables = (markdown) => {
-    const tableRegex = /\|(.+)\|/g;
+    // const tableRegex = /\|(.+)\|/g;
     const lines = markdown.split('\n');
     const tables = [];
     
@@ -69,6 +69,24 @@ This is a sample markdown table that will be converted to Excel view.`);
 
   // Create Excel-like grid structure
   const { columns, rows } = useMemo(() => {
+    // Parse markdown first to determine required dimensions
+    const tables = parseMarkdownTables(markdownInput);
+    let requiredCols = gridSize.cols;
+    let requiredRows = gridSize.rows;
+    
+    if (tables.length > 0) {
+      const table = tables[0];
+      if (table.length > 0) {
+        // Calculate required columns (max columns in any row)
+        const maxCols = Math.max(...table.map(row => row.length));
+        requiredCols = Math.max(maxCols, gridSize.cols);
+        
+        // Calculate required rows (header + data rows + buffer)
+        const dataRowCount = table.length; // includes header
+        requiredRows = Math.max(dataRowCount + 5, gridSize.rows); // +5 for buffer
+      }
+    }
+
     // Create columns with Excel-like headers (A, B, C, etc.)
     const cols = [
       {
@@ -82,7 +100,7 @@ This is a sample markdown table that will be converted to Excel view.`);
           <div className="row-number">{row.rowNumber}</div>
         )
       },
-      ...Array.from({ length: gridSize.cols }, (_, index) => ({
+      ...Array.from({ length: requiredCols }, (_, index) => ({
         key: `col${index}`,
         name: getColumnLetter(index),
         width: 120,
@@ -96,20 +114,19 @@ This is a sample markdown table that will be converted to Excel view.`);
     ];
 
     // Create empty grid rows
-    const gridRows = Array.from({ length: gridSize.rows }, (_, rowIndex) => {
+    const gridRows = Array.from({ length: requiredRows }, (_, rowIndex) => {
       const rowData = { 
         id: rowIndex,
         rowNumber: rowIndex + 1
       };
       // Initialize all cells as empty
-      for (let colIndex = 0; colIndex < gridSize.cols; colIndex++) {
+      for (let colIndex = 0; colIndex < requiredCols; colIndex++) {
         rowData[`col${colIndex}`] = '';
       }
       return rowData;
     });
 
     // Parse markdown and populate the grid with data
-    const tables = parseMarkdownTables(markdownInput);
     if (tables.length > 0) {
       const table = tables[0];
       if (table.length > 0) {
@@ -118,7 +135,7 @@ This is a sample markdown table that will be converted to Excel view.`);
         
         // Place headers in first row if they exist
         headers.forEach((header, colIndex) => {
-          if (colIndex < gridSize.cols && gridRows[0]) {
+          if (colIndex < requiredCols && gridRows[0]) {
             gridRows[0][`col${colIndex}`] = header;
           }
         });
@@ -126,15 +143,23 @@ This is a sample markdown table that will be converted to Excel view.`);
         // Place data in subsequent rows
         dataRows.forEach((dataRow, rowIndex) => {
           const targetRowIndex = rowIndex + 1; // Start from row 2 (index 1)
-          if (targetRowIndex < gridSize.rows) {
+          if (targetRowIndex < requiredRows) {
             dataRow.forEach((cellValue, colIndex) => {
-              if (colIndex < gridSize.cols) {
+              if (colIndex < requiredCols) {
                 gridRows[targetRowIndex][`col${colIndex}`] = cellValue || '';
               }
             });
           }
         });
       }
+    }
+
+    // Update grid size state if it has changed
+    if (requiredCols !== gridSize.cols || requiredRows !== gridSize.rows) {
+      // Use setTimeout to avoid state update during render
+      setTimeout(() => {
+        setGridSize({ rows: requiredRows, cols: requiredCols });
+      }, 0);
     }
 
     return { columns: cols, rows: gridRows };
@@ -185,7 +210,7 @@ This is a sample markdown table that will be converted to Excel view.`);
 
   // Add new column
   const addColumn = () => {
-    const newColIndex = gridSize.cols;
+    const newColIndex = Math.max(gridSize.cols, columns.length - 1); // -1 for row number column
     const newColKey = `col${newColIndex}`;
     
     // Update existing rows with new column
