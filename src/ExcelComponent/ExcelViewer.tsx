@@ -711,6 +711,16 @@ This is a sample markdown table that will be converted to Excel view.`
           )}
 
           {/* Always show download button */}
+          <div className="control-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={showHeaders}
+                onChange={(e) => setShowHeaders(e.target.checked)}
+              />
+              Show Headers
+            </label>
+          </div>
           <button onClick={handleGenerateExcel} className="btn btn-success">
             Download Excel
           </button>
