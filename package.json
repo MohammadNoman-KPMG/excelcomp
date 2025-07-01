@@ -12,7 +12,6 @@
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4",
     "react-markdown": "^9.0.1",
-    "react-data-grid": "^7.0.0-beta.19",
     "xlsx": "^0.18.5"
   },
   "scripts": {
@@ -38,5 +37,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+
+  "devDependencies": {
+    "@types/react-data-grid": "^4.0.12"
   }
 }

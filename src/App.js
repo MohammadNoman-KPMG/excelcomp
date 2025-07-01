@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
-import ExcelViewer from './ExcelComponent/index.ts';
+// Import ExcelViewer component directly from the tsx file
+import ExcelViewer from './ExcelComponent/ExcelViewer.tsx';
 
 function App() {
   return (
@@ -15,6 +16,5 @@ function App() {
     </div>
   );
 }
-
 
 export default App;

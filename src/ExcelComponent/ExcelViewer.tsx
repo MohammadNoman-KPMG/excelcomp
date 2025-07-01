@@ -1,7 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import DataGrid from 'react-data-grid';
-import 'react-data-grid/lib/styles.css';
 import * as XLSX from 'xlsx';
 import './ExcelViewer.css';
 
@@ -13,6 +11,13 @@ interface GridSize {
 
 interface RowData {
   [key: string]: any;
+}
+
+interface CellSelection {
+  startRow: number;
+  startCol: number;
+  endRow: number;
+  endCol: number;
 }
 
 const ExcelViewer: React.FC = () => {
@@ -29,6 +34,11 @@ This is a sample markdown table that will be converted to Excel view.`);
 
   const [gridSize, setGridSize] = useState<GridSize>({ rows: 20, cols: 10 });
   const [editableData, setEditableData] = useState<RowData[]>([]);
+  const [selectedCells, setSelectedCells] = useState<CellSelection | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{column: number, direction: 'asc' | 'desc'} | null>(null);
+  const [columnWidths, setColumnWidths] = useState<number[]>(Array(10).fill(120));
+  const gridRef = useRef<HTMLDivElement>(null);
 
   // Generate Excel-like column letters (A, B, C, ..., Z, AA, AB, etc.)
   const getColumnLetter = (index: number): string => {
@@ -165,7 +175,7 @@ This is a sample markdown table that will be converted to Excel view.`);
       }, 0);
     }
 
-    return { columns: cols, rows: gridRows };
+    return { columns: [], rows: gridRows };
   }, [markdownInput, gridSize]);
 
   // Update editable data when rows change
@@ -173,25 +183,184 @@ This is a sample markdown table that will be converted to Excel view.`);
     setEditableData(rows);
   }, [rows]);
 
-  // Handle cell editing
-  const handleRowsChange = useCallback((newRows: RowData[]) => {
-    setEditableData(newRows);
-  }, []);
+  // Handle cell value change
+  const handleCellChange = (rowIndex: number, colKey: string, value: string) => {
+    const updatedData = [...editableData];
+    updatedData[rowIndex] = { ...updatedData[rowIndex], [colKey]: value };
+    setEditableData(updatedData);
+  };
 
   // Download as Excel file
   const downloadExcel = (): void => {
     if (editableData.length === 0) return;
     
-    // Convert data to worksheet format (exclude row number column)
-    const wsData: any[][] = editableData.map((row: RowData) => 
-      columns.slice(1).map((col: any) => row[col.key] || '')
-    );
+    // Create headers array
+    const headers = Array.from({ length: gridSize.cols }, (_, index) => getColumnLetter(index));
+    
+    // Convert data to worksheet format
+    const wsData: any[][] = [
+      headers, // Column headers
+      ...editableData.map((row: RowData) => 
+        headers.map((_, colIndex) => row[`col${colIndex}`] || '')
+      )
+    ];
     
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
     
     XLSX.writeFile(wb, "excel-data.xlsx");
+  };
+
+  // Copy grid data to clipboard in Excel-compatible format
+  const copyToClipboard = async (): Promise<void> => {
+    if (editableData.length === 0) return;
+    
+    // Create headers array
+    const headers = Array.from({ length: gridSize.cols }, (_, index) => getColumnLetter(index));
+    
+    // Convert data to tab-separated format (Excel compatible)
+    const clipboardData = [
+      headers.join('\t'), // Column headers
+      ...editableData.map((row: RowData) => 
+        headers.map((_, colIndex) => row[`col${colIndex}`] || '').join('\t')
+      )
+    ].join('\n');
+    
+    try {
+      await navigator.clipboard.writeText(clipboardData);
+      alert('Data copied to clipboard! You can now paste it into Excel.');
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      // Fallback for older browsers
+      fallbackCopyTextToClipboard(clipboardData);
+    }
+  };
+
+  // Fallback copy method for older browsers
+  const fallbackCopyTextToClipboard = (text: string): void => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.top = '0';
+    textArea.style.left = '0';
+    textArea.style.position = 'fixed';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        alert('Data copied to clipboard! You can now paste it into Excel.');
+      } else {
+        alert('Copy failed. Please try downloading the Excel file instead.');
+      }
+    } catch (err) {
+      console.error('Fallback: Oops, unable to copy', err);
+      alert('Copy failed. Please try downloading the Excel file instead.');
+    }
+    
+    document.body.removeChild(textArea);
+  };
+
+  // Advanced sorting function
+  const sortData = (columnIndex: number) => {
+    const direction = sortConfig?.column === columnIndex && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    
+    const sortedData = [...editableData].sort((a, b) => {
+      const aVal = a[`col${columnIndex}`] || '';
+      const bVal = b[`col${columnIndex}`] || '';
+      
+      // Try to convert to numbers for numeric sorting
+      const aNum = parseFloat(aVal);
+      const bNum = parseFloat(bVal);
+      
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return direction === 'asc' ? aNum - bNum : bNum - aNum;
+      }
+      
+      // String sorting
+      return direction === 'asc' 
+        ? aVal.toString().localeCompare(bVal.toString())
+        : bVal.toString().localeCompare(aVal.toString());
+    });
+    
+    setEditableData(sortedData);
+    setSortConfig({ column: columnIndex, direction });
+  };
+
+  // Cell selection handlers
+  const handleCellMouseDown = (rowIndex: number, colIndex: number) => {
+    setSelectedCells({
+      startRow: rowIndex,
+      startCol: colIndex,
+      endRow: rowIndex,
+      endCol: colIndex
+    });
+    setIsDragging(true);
+  };
+
+  const handleCellMouseEnter = (rowIndex: number, colIndex: number) => {
+    if (isDragging && selectedCells) {
+      setSelectedCells({
+        ...selectedCells,
+        endRow: rowIndex,
+        endCol: colIndex
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Check if cell is selected
+  const isCellSelected = (rowIndex: number, colIndex: number): boolean => {
+    if (!selectedCells) return false;
+    
+    const minRow = Math.min(selectedCells.startRow, selectedCells.endRow);
+    const maxRow = Math.max(selectedCells.startRow, selectedCells.endRow);
+    const minCol = Math.min(selectedCells.startCol, selectedCells.endCol);
+    const maxCol = Math.max(selectedCells.startCol, selectedCells.endCol);
+    
+    return rowIndex >= minRow && rowIndex <= maxRow && colIndex >= minCol && colIndex <= maxCol;
+  };
+
+  // Copy selected cells
+  const copySelectedCells = async (): Promise<void> => {
+    if (!selectedCells || editableData.length === 0) return;
+    
+    const minRow = Math.min(selectedCells.startRow, selectedCells.endRow);
+    const maxRow = Math.max(selectedCells.startRow, selectedCells.endRow);
+    const minCol = Math.min(selectedCells.startCol, selectedCells.endCol);
+    const maxCol = Math.max(selectedCells.startCol, selectedCells.endCol);
+    
+    const selectedData: string[] = [];
+    
+    for (let row = minRow; row <= maxRow; row++) {
+      const rowData: string[] = [];
+      for (let col = minCol; col <= maxCol; col++) {
+        rowData.push(editableData[row]?.[`col${col}`] || '');
+      }
+      selectedData.push(rowData.join('\t'));
+    }
+    
+    const clipboardData = selectedData.join('\n');
+    
+    try {
+      await navigator.clipboard.writeText(clipboardData);
+      alert(`Selected ${maxRow - minRow + 1} rows and ${maxCol - minCol + 1} columns copied to clipboard!`);
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      fallbackCopyTextToClipboard(clipboardData);
+    }
+  };
+
+  // Column resizing
+  const handleColumnResize = (colIndex: number, newWidth: number) => {
+    const newWidths = [...columnWidths];
+    newWidths[colIndex] = Math.max(80, newWidth);
+    setColumnWidths(newWidths);
   };
 
   // Add new row
@@ -257,18 +426,11 @@ This is a sample markdown table that will be converted to Excel view.`);
           placeholder="Enter your markdown with tables here..."
           className="markdown-input"
         />
-        
-        <div className="preview-section">
-          <h3>Markdown Preview</h3>
-          <div className="markdown-preview">
-            <ReactMarkdown>{markdownInput}</ReactMarkdown>
-          </div>
-        </div>
       </div>
 
       <div className="excel-section">
         <div className="excel-header">
-          <h2>Excel View</h2>
+          <h2>Advanced Excel View</h2>
           <div className="excel-controls">
             <button onClick={addRow} className="btn btn-primary">
               Add Row
@@ -279,10 +441,13 @@ This is a sample markdown table that will be converted to Excel view.`);
             <button onClick={clearGrid} className="btn btn-warning">
               Clear Grid
             </button>
-            <button 
-              onClick={downloadExcel} 
-              className="btn btn-success"
-            >
+            <button onClick={copySelectedCells} className="btn btn-info" disabled={!selectedCells}>
+              Copy Selected
+            </button>
+            <button onClick={copyToClipboard} className="btn btn-info">
+              Copy All
+            </button>
+            <button onClick={downloadExcel} className="btn btn-success">
               Download Excel
             </button>
           </div>
@@ -290,25 +455,88 @@ This is a sample markdown table that will be converted to Excel view.`);
         
         <div className="grid-info">
           <span>Grid Size: {gridSize.rows} rows × {gridSize.cols} columns</span>
+          {selectedCells && (
+            <span className="selection-info">
+              | Selected: {Math.abs(selectedCells.endRow - selectedCells.startRow) + 1} rows × {Math.abs(selectedCells.endCol - selectedCells.startCol) + 1} columns
+            </span>
+          )}
         </div>
 
-        <div className="data-grid-container">
-          {/* Use spread operator with type assertion to bypass type checking */}
-          <DataGrid
-            {...{
-              columns,
-              rows: editableData,
-              onRowsChange: handleRowsChange,
-              style: { height: '600px' },
-              defaultColumnOptions: { resizable: true },
-              className: "excel-grid"
-            } as any}
-          />
+        <div 
+          className="advanced-excel-grid"
+          ref={gridRef}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          {/* Column Headers */}
+          <div className="excel-row header-row">
+            <div className="excel-cell row-header"></div>
+            {Array.from({ length: gridSize.cols }, (_, colIndex) => (
+              <div 
+                key={colIndex} 
+                className="excel-cell column-header sortable"
+                style={{ width: columnWidths[colIndex] }}
+                onClick={() => sortData(colIndex)}
+              >
+                <span>{getColumnLetter(colIndex)}</span>
+                {sortConfig?.column === colIndex && (
+                  <span className="sort-indicator">
+                    {sortConfig.direction === 'asc' ? ' ↑' : ' ↓'}
+                  </span>
+                )}
+                <div 
+                  className="column-resizer"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    const startX = e.clientX;
+                    const startWidth = columnWidths[colIndex];
+                    
+                    const handleMouseMove = (e: MouseEvent) => {
+                      const newWidth = startWidth + (e.clientX - startX);
+                      handleColumnResize(colIndex, newWidth);
+                    };
+                    
+                    const handleMouseUp = () => {
+                      document.removeEventListener('mousemove', handleMouseMove);
+                      document.removeEventListener('mouseup', handleMouseUp);
+                    };
+                    
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Data Rows */}
+          {editableData.map((row, rowIndex) => (
+            <div key={rowIndex} className="excel-row">
+              {/* Row Number */}
+              <div className="excel-cell row-header">{rowIndex + 1}</div>
+              
+              {/* Data Cells */}
+              {Array.from({ length: gridSize.cols }, (_, colIndex) => (
+                <div 
+                  key={colIndex} 
+                  className={`excel-cell data-cell advanced-cell ${
+                    isCellSelected(rowIndex, colIndex) ? 'selected' : ''
+                  }`}
+                  style={{ width: columnWidths[colIndex] }}
+                  onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
+                  onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
+                >
+                  <span className="cell-content">
+                    {row[`col${colIndex}`] || ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 };
-
 
 export default ExcelViewer;
