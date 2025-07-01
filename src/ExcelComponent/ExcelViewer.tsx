@@ -38,6 +38,7 @@ This is a sample markdown table that will be converted to Excel view.`);
   const [isDragging, setIsDragging] = useState(false);
   const [sortConfig, setSortConfig] = useState<{column: number, direction: 'asc' | 'desc'} | null>(null);
   const [columnWidths, setColumnWidths] = useState<number[]>(Array(10).fill(120));
+  const [showHeaders, setShowHeaders] = useState<boolean>(true);
   const gridRef = useRef<HTMLDivElement>(null);
 
   // Generate Excel-like column letters (A, B, C, ..., Z, AA, AB, etc.)
@@ -432,15 +433,17 @@ This is a sample markdown table that will be converted to Excel view.`);
         <div className="excel-header">
           <h2>Advanced Excel View</h2>
           <div className="excel-controls">
-            {/* <button onClick={addRow} className="btn btn-primary">
-              Add Row
-            </button>
-            <button onClick={addColumn} className="btn btn-secondary">
-              Add Column
-            </button>
-            <button onClick={clearGrid} className="btn btn-warning">
-              Clear Grid
-            </button> */}
+            <div className="checkbox-container">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={showHeaders}
+                  onChange={(e) => setShowHeaders(e.target.checked)}
+                  className="header-checkbox"
+                />
+                Show Column & Row Headers
+              </label>
+            </div>
             <button onClick={copySelectedCells} className="btn btn-info" disabled={!selectedCells}>
               Copy Selected
             </button>
@@ -468,52 +471,56 @@ This is a sample markdown table that will be converted to Excel view.`);
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-          {/* Column Headers */}
-          <div className="excel-row header-row">
-            <div className="excel-cell row-header"></div>
-            {Array.from({ length: gridSize.cols }, (_, colIndex) => (
-              <div 
-                key={colIndex} 
-                className="excel-cell column-header sortable"
-                style={{ width: columnWidths[colIndex] }}
-                onClick={() => sortData(colIndex)}
-              >
-                <span>{getColumnLetter(colIndex)}</span>
-                {sortConfig?.column === colIndex && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === 'asc' ? ' ↑' : ' ↓'}
-                  </span>
-                )}
+          {/* Column Headers - Conditionally Rendered */}
+          {showHeaders && (
+            <div className="excel-row header-row">
+              <div className="excel-cell row-header"></div>
+              {Array.from({ length: gridSize.cols }, (_, colIndex) => (
                 <div 
-                  className="column-resizer"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    const startX = e.clientX;
-                    const startWidth = columnWidths[colIndex];
-                    
-                    const handleMouseMove = (e: MouseEvent) => {
-                      const newWidth = startWidth + (e.clientX - startX);
-                      handleColumnResize(colIndex, newWidth);
-                    };
-                    
-                    const handleMouseUp = () => {
-                      document.removeEventListener('mousemove', handleMouseMove);
-                      document.removeEventListener('mouseup', handleMouseUp);
-                    };
-                    
-                    document.addEventListener('mousemove', handleMouseMove);
-                    document.addEventListener('mouseup', handleMouseUp);
-                  }}
-                />
-              </div>
-            ))}
-          </div>
+                  key={colIndex} 
+                  className="excel-cell column-header sortable"
+                  style={{ width: columnWidths[colIndex] }}
+                  onClick={() => sortData(colIndex)}
+                >
+                  <span>{getColumnLetter(colIndex)}</span>
+                  {sortConfig?.column === colIndex && (
+                    <span className="sort-indicator">
+                      {sortConfig.direction === 'asc' ? ' ↑' : ' ↓'}
+                    </span>
+                  )}
+                  <div 
+                    className="column-resizer"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      const startX = e.clientX;
+                      const startWidth = columnWidths[colIndex];
+                      
+                      const handleMouseMove = (e: MouseEvent) => {
+                        const newWidth = startWidth + (e.clientX - startX);
+                        handleColumnResize(colIndex, newWidth);
+                      };
+                      
+                      const handleMouseUp = () => {
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                      };
+                      
+                      document.addEventListener('mousemove', handleMouseMove);
+                      document.addEventListener('mouseup', handleMouseUp);
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Data Rows */}
           {editableData.map((row, rowIndex) => (
             <div key={rowIndex} className="excel-row">
-              {/* Row Number */}
-              <div className="excel-cell row-header">{rowIndex + 1}</div>
+              {/* Row Number - Conditionally Rendered */}
+              {showHeaders && (
+                <div className="excel-cell row-header">{rowIndex + 1}</div>
+              )}
               
               {/* Data Cells */}
               {Array.from({ length: gridSize.cols }, (_, colIndex) => (
@@ -521,7 +528,7 @@ This is a sample markdown table that will be converted to Excel view.`);
                   key={colIndex} 
                   className={`excel-cell data-cell advanced-cell ${
                     isCellSelected(rowIndex, colIndex) ? 'selected' : ''
-                  }`}
+                  } ${!showHeaders ? 'no-headers' : ''}`}
                   style={{ width: columnWidths[colIndex] }}
                   onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
                   onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
