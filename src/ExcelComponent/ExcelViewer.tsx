@@ -673,85 +673,9 @@ This is a sample markdown table that will be converted to Excel view.`
       )}
 
       <div className="excel-section">
-        {!readOnly && (
-          <div className="excel-header">
-            <h2>Advanced Excel View</h2>
-          </div>
-        )}
-        
-        <div className="grid-info">
-          <span>Grid Size: {gridSize.rows} rows × {gridSize.cols} columns</span>
-          <span className="min-size-info">
-            | Min Size: {parseInt(minRows) || 20} rows × {parseInt(minCols) || 10} columns
-          </span>
-          {selectedCells && (
-            <span className="selection-info">
-              | Selected: {Math.abs(selectedCells.endRow - selectedCells.startRow) + 1} rows × {Math.abs(selectedCells.endCol - selectedCells.startCol) + 1} columns
-            </span>
-          )}
-        </div>
+
 
         <div className="excel-controls">
-          {/* Only show controls if not in read-only mode */}
-          {!readOnly && (
-            <>
-              <div className="size-input-container">
-                <label className="size-label">
-                  Min Rows:
-                  <input
-                    type="number"
-                    value={minRows}
-                    onChange={(e) => setMinRows(e.target.value)}
-                    placeholder="20"
-                    min="1"
-                    max="1000"
-                    className="size-input"
-                  />
-                </label>
-              </div>
-              <div className="size-input-container">
-                <label className="size-label">
-                  Min Columns:
-                  <input
-                    type="number"
-                    value={minCols}
-                    onChange={(e) => setMinCols(e.target.value)}
-                    placeholder="10"
-                    min="1"
-                    max="100"
-                    className="size-input"
-                  />
-                </label>
-              </div>
-              
-              <div className="filename-container">
-                <label className="filename-label">
-                  File: 
-                  <input
-                    type="text"
-                    value={fileName}
-                    onChange={(e) => setFileName(e.target.value)}
-                    placeholder="excel-data (optional)"
-                    className="filename-input"
-                  />
-                </label>
-              </div>
-              
-              <div className="checkbox-container">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={showHeaders}
-                    onChange={(e) => setShowHeaders(e.target.checked)}
-                    className="header-checkbox"
-                  />
-                  Show Header
-                </label>
-              </div>
-            </>
-          )}
-
-          {/* Always show download button */}
           <button onClick={handleGenerateExcel} className="btn btn-success">
             Download Excel
           </button>
