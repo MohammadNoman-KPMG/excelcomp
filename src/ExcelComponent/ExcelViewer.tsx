@@ -37,9 +37,11 @@ This is a sample markdown table that will be converted to Excel view.`);
   const [selectedCells, setSelectedCells] = useState<CellSelection | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [sortConfig, setSortConfig] = useState<{column: number, direction: 'asc' | 'desc'} | null>(null);
-  const [columnWidths, setColumnWidths] = useState<number[]>(Array(10).fill(120));
+  const [columnWidths, setColumnWidths] = useState<number[]>([]);
   const [showHeaders, setShowHeaders] = useState<boolean>(true);
   const [fileName, setFileName] = useState<string>('');
+  const [minRows, setMinRows] = useState<string>('20');
+  const [minCols, setMinCols] = useState<string>('10');
   const gridRef = useRef<HTMLDivElement>(null);
 
   // Generate Excel-like column letters (A, B, C, ..., Z, AA, AB, etc.)
@@ -92,17 +94,30 @@ This is a sample markdown table that will be converted to Excel view.`);
   const { columns, rows } = useMemo(() => {
     // Parse markdown first to determine required dimensions
     const table = parseMarkdownTables(markdownInput);
-    let requiredCols = gridSize.cols;
-    let requiredRows = gridSize.rows;
+    
+    // Get minimum values from inputs or use defaults
+    const defaultMinRows = parseInt(minRows) || 20;
+    const defaultMinCols = parseInt(minCols) || 10;
+    
+    let requiredCols = defaultMinCols;
+    let requiredRows = defaultMinRows;
     
     if (table.length > 0) {
       // Calculate required columns (max columns in any row)
       const maxCols = Math.max(...table.map(row => row.length));
-      requiredCols = Math.max(maxCols, gridSize.cols);
+      requiredCols = Math.max(maxCols, defaultMinCols);
       
       // Calculate required rows (header + data rows + buffer)
       const dataRowCount = table.length; // includes header
-      requiredRows = Math.max(dataRowCount + 5, gridSize.rows); // +5 for buffer
+      requiredRows = Math.max(dataRowCount + 5, defaultMinRows); // +5 for buffer
+    }
+
+    // Update column widths array to match required columns
+    if (columnWidths.length !== requiredCols) {
+      const newWidths = Array.from({ length: requiredCols }, (_, index) => 
+        columnWidths[index] || 120 // Use existing width or default to 120
+      );
+      setColumnWidths(newWidths);
     }
 
     // Create columns with Excel-like headers (A, B, C, etc.)
@@ -178,7 +193,7 @@ This is a sample markdown table that will be converted to Excel view.`);
     }
 
     return { columns: [], rows: gridRows };
-  }, [markdownInput, gridSize]);
+  }, [markdownInput, gridSize, minRows, minCols, columnWidths.length]);
 
   // Update editable data when rows change
   React.useEffect(() => {
@@ -365,9 +380,11 @@ This is a sample markdown table that will be converted to Excel view.`);
 
   // Column resizing
   const handleColumnResize = (colIndex: number, newWidth: number) => {
-    const newWidths = [...columnWidths];
-    newWidths[colIndex] = Math.max(80, newWidth);
-    setColumnWidths(newWidths);
+    if (colIndex >= 0 && colIndex < columnWidths.length) {
+      const newWidths = [...columnWidths];
+      newWidths[colIndex] = Math.max(80, newWidth);
+      setColumnWidths(newWidths);
+    }
   };
 
   // Add new row
@@ -433,6 +450,37 @@ This is a sample markdown table that will be converted to Excel view.`);
           placeholder="Enter your markdown with tables here..."
           className="markdown-input"
         />
+        
+        <div className="grid-size-inputs">
+          <div className="size-input-container">
+            <label className="size-label">
+              Min Rows:
+              <input
+                type="number"
+                value={minRows}
+                onChange={(e) => setMinRows(e.target.value)}
+                placeholder="20"
+                min="1"
+                max="1000"
+                className="size-input"
+              />
+            </label>
+          </div>
+          <div className="size-input-container">
+            <label className="size-label">
+              Min Columns:
+              <input
+                type="number"
+                value={minCols}
+                onChange={(e) => setMinCols(e.target.value)}
+                placeholder="10"
+                min="1"
+                max="100"
+                className="size-input"
+              />
+            </label>
+          </div>
+        </div>
       </div>
 
       <div className="excel-section">
@@ -476,6 +524,9 @@ This is a sample markdown table that will be converted to Excel view.`);
         
         <div className="grid-info">
           <span>Grid Size: {gridSize.rows} rows × {gridSize.cols} columns</span>
+          <span className="min-size-info">
+            | Min Size: {parseInt(minRows) || 20} rows × {parseInt(minCols) || 10} columns
+          </span>
           {selectedCells && (
             <span className="selection-info">
               | Selected: {Math.abs(selectedCells.endRow - selectedCells.startRow) + 1} rows × {Math.abs(selectedCells.endCol - selectedCells.startCol) + 1} columns
@@ -547,7 +598,10 @@ This is a sample markdown table that will be converted to Excel view.`);
                   className={`excel-cell data-cell advanced-cell ${
                     isCellSelected(rowIndex, colIndex) ? 'selected' : ''
                   } ${!showHeaders ? 'no-headers' : ''}`}
-                  style={{ width: columnWidths[colIndex] }}
+                  style={{ 
+                    width: columnWidths[colIndex] || 120,
+                    minWidth: '80px' // Ensure minimum width for grid lines
+                  }}
                   onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
                   onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
                 >
