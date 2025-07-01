@@ -364,53 +364,53 @@ This is a sample markdown table that will be converted to Excel view.`);
   };
 
   // Add new row
-  const addRow = (): void => {
-    const newRowNumber = gridSize.rows + 1;
-    const newRow: RowData = { 
-      id: gridSize.rows,
-      rowNumber: newRowNumber
-    };
+//   const addRow = (): void => {
+//     const newRowNumber = gridSize.rows + 1;
+//     const newRow: RowData = { 
+//       id: gridSize.rows,
+//       rowNumber: newRowNumber
+//     };
     
-    // Initialize all cells as empty
-    for (let colIndex = 0; colIndex < gridSize.cols; colIndex++) {
-      newRow[`col${colIndex}`] = '';
-    }
+//     // Initialize all cells as empty
+//     for (let colIndex = 0; colIndex < gridSize.cols; colIndex++) {
+//       newRow[`col${colIndex}`] = '';
+//     }
     
-    setEditableData([...editableData, newRow]);
-    setGridSize(prev => ({ ...prev, rows: prev.rows + 1 }));
-  };
+//     setEditableData([...editableData, newRow]);
+//     setGridSize(prev => ({ ...prev, rows: prev.rows + 1 }));
+//   };
 
   // Add new column
-  const addColumn = (): void => {
-    const newColIndex = Math.max(gridSize.cols, columns.length - 1); // -1 for row number column
-    const newColKey = `col${newColIndex}`;
+//   const addColumn = (): void => {
+//     const newColIndex = Math.max(gridSize.cols, columns.length - 1); // -1 for row number column
+//     const newColKey = `col${newColIndex}`;
     
-    // Update existing rows with new column
-    const updatedRows: RowData[] = editableData.map((row: RowData) => ({
-      ...row,
-      [newColKey]: ''
-    }));
+//     // Update existing rows with new column
+//     const updatedRows: RowData[] = editableData.map((row: RowData) => ({
+//       ...row,
+//       [newColKey]: ''
+//     }));
     
-    setEditableData(updatedRows);
-    setGridSize(prev => ({ ...prev, cols: prev.cols + 1 }));
-  };
+//     setEditableData(updatedRows);
+//     setGridSize(prev => ({ ...prev, cols: prev.cols + 1 }));
+//   };
 
   // Clear all data
-  const clearGrid = (): void => {
-    const clearedRows: RowData[] = editableData.map((row: RowData) => {
-      const newRow: RowData = { 
-        id: row.id,
-        rowNumber: row.rowNumber
-      };
-      // Clear all data columns
-      for (let colIndex = 0; colIndex < gridSize.cols; colIndex++) {
-        newRow[`col${colIndex}`] = '';
-      }
-      return newRow;
-    });
+//   const clearGrid = (): void => {
+//     const clearedRows: RowData[] = editableData.map((row: RowData) => {
+//       const newRow: RowData = { 
+//         id: row.id,
+//         rowNumber: row.rowNumber
+//       };
+//       // Clear all data columns
+//       for (let colIndex = 0; colIndex < gridSize.cols; colIndex++) {
+//         newRow[`col${colIndex}`] = '';
+//       }
+//       return newRow;
+//     });
     
-    setEditableData(clearedRows);
-  };
+//     setEditableData(clearedRows);
+//   };
 
   const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     setMarkdownInput(e.target.value);
@@ -432,7 +432,7 @@ This is a sample markdown table that will be converted to Excel view.`);
         <div className="excel-header">
           <h2>Advanced Excel View</h2>
           <div className="excel-controls">
-            <button onClick={addRow} className="btn btn-primary">
+            {/* <button onClick={addRow} className="btn btn-primary">
               Add Row
             </button>
             <button onClick={addColumn} className="btn btn-secondary">
@@ -440,7 +440,7 @@ This is a sample markdown table that will be converted to Excel view.`);
             </button>
             <button onClick={clearGrid} className="btn btn-warning">
               Clear Grid
-            </button>
+            </button> */}
             <button onClick={copySelectedCells} className="btn btn-info" disabled={!selectedCells}>
               Copy Selected
             </button>
