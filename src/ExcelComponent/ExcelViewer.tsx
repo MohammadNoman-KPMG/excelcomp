@@ -695,48 +695,6 @@ This is a sample markdown table that will be converted to Excel view.`
           {/* Only show controls if not in read-only mode */}
           {!readOnly && (
             <>
-              <div className="size-input-container">
-                <label className="size-label">
-                  Min Rows:
-                  <input
-                    type="number"
-                    value={minRows}
-                    onChange={(e) => setMinRows(e.target.value)}
-                    placeholder="20"
-                    min="1"
-                    max="1000"
-                    className="size-input"
-                  />
-                </label>
-              </div>
-              <div className="size-input-container">
-                <label className="size-label">
-                  Min Columns:
-                  <input
-                    type="number"
-                    value={minCols}
-                    onChange={(e) => setMinCols(e.target.value)}
-                    placeholder="10"
-                    min="1"
-                    max="100"
-                    className="size-input"
-                  />
-                </label>
-              </div>
-              
-              <div className="filename-container">
-                <label className="filename-label">
-                  File: 
-                  <input
-                    type="text"
-                    value={fileName}
-                    onChange={(e) => setFileName(e.target.value)}
-                    placeholder="excel-data (optional)"
-                    className="filename-input"
-                  />
-                </label>
-              </div>
-              
               <div className="checkbox-container">
                 <label className="checkbox-label">
                   <input
