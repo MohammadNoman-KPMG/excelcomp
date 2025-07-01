@@ -430,6 +430,51 @@ h2, h3 {
   background: #f1f1f1;
 }
 
+/* Enhanced grid line visibility */
+.advanced-cell {
+  cursor: cell;
+  transition: background-color 0.1s;
+  position: relative;
+  border-right: 1px solid #e9ecef !important;
+  border-bottom: 1px solid #e9ecef !important;
+  box-sizing: border-box;
+}
+
+/* Ensure all cells have proper borders */
+.excel-cell.data-cell {
+  border-right: 1px solid #e9ecef !important;
+  border-bottom: 1px solid #e9ecef !important;
+  min-width: 80px;
+  max-width: none;
+}
+
+/* Force grid lines on all rows */
+.excel-row {
+  display: flex;
+  border-bottom: 1px solid #e9ecef !important;
+  min-height: 32px;
+}
+
+/* Ensure consistent cell sizing */
+.advanced-cell:last-child {
+  border-right: 1px solid #d0d7de !important; /* Border for last column */
+}
+
+.excel-row:last-child .advanced-cell {
+  border-bottom: 1px solid #d0d7de !important; /* Border for last row */
+}
+
+/* Column header improvements */
+.column-header.sortable {
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s;
+  border-right: 1px solid #e9ecef !important;
+  border-bottom: 2px solid #dee2e6 !important;
+  min-width: 80px;
+  box-sizing: border-box;
+}
+
 /* Advanced Excel Grid Styles */
 .advanced-excel-grid {
   border: 2px solid #d0d7de;
@@ -572,26 +617,105 @@ h2, h3 {
   color: #007bff;
 }
 
-/* Layout adjustments when headers are hidden */
-.advanced-cell.no-headers {
-  border-left: 1px solid #e9ecef;
-}
-
-.excel-row .advanced-cell.no-headers:first-child {
-  border-left: 2px solid #d0d7de;
-}
-
-/* Adjust grid container when no headers */
-.advanced-excel-grid .excel-row:first-child .advanced-cell.no-headers {
-  border-top: 2px solid #d0d7de;
-}
-
-/* Update excel controls layout */
-.excel-controls {
+/* Filename input styling */
+.filename-container {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
   align-items: center;
+  margin-right: 15px;
+}
+
+.filename-label {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #495057;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.filename-input {
+  margin-left: 8px;
+  padding: 6px 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 180px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filename-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.filename-input::placeholder {
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Grid size input styling */
+.grid-size-inputs {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  flex-wrap: wrap;
+}
+
+.size-input-container {
+  display: flex;
+  align-items: center;
+}
+
+.size-label {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #495057;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.size-input {
+  margin-left: 8px;
+  padding: 6px 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 80px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.size-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.size-input::placeholder {
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Remove spinner arrows from number inputs */
+.size-input::-webkit-outer-spin-button,
+.size-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.size-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.min-size-info {
+  color: #6c757d;
+  font-size: 13px;
+  margin-left: 10px;
 }
 
 @media (max-width: 768px) {
@@ -609,9 +733,23 @@ h2, h3 {
     gap: 8px;
   }
   
+  .grid-size-inputs {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .filename-container,
   .checkbox-container {
     margin-right: 0;
     margin-bottom: 10px;
+  }
+  
+  .filename-input {
+    width: 150px;
+  }
+  
+  .size-input {
+    width: 60px;
   }
   
   .markdown-input {
