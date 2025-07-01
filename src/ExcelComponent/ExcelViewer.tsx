@@ -364,58 +364,29 @@ This is a sample markdown table that will be converted to Excel view.`);
     setColumnWidths(newWidths);
   };
 
-  // Add new row
-//   const addRow = (): void => {
-//     const newRowNumber = gridSize.rows + 1;
-//     const newRow: RowData = { 
-//       id: gridSize.rows,
-//       rowNumber: newRowNumber
-//     };
-    
-//     // Initialize all cells as empty
-//     for (let colIndex = 0; colIndex < gridSize.cols; colIndex++) {
-//       newRow[`col${colIndex}`] = '';
-//     }
-    
-//     setEditableData([...editableData, newRow]);
-//     setGridSize(prev => ({ ...prev, rows: prev.rows + 1 }));
-//   };
-
-  // Add new column
-//   const addColumn = (): void => {
-//     const newColIndex = Math.max(gridSize.cols, columns.length - 1); // -1 for row number column
-//     const newColKey = `col${newColIndex}`;
-    
-//     // Update existing rows with new column
-//     const updatedRows: RowData[] = editableData.map((row: RowData) => ({
-//       ...row,
-//       [newColKey]: ''
-//     }));
-    
-//     setEditableData(updatedRows);
-//     setGridSize(prev => ({ ...prev, cols: prev.cols + 1 }));
-//   };
-
-  // Clear all data
-//   const clearGrid = (): void => {
-//     const clearedRows: RowData[] = editableData.map((row: RowData) => {
-//       const newRow: RowData = { 
-//         id: row.id,
-//         rowNumber: row.rowNumber
-//       };
-//       // Clear all data columns
-//       for (let colIndex = 0; colIndex < gridSize.cols; colIndex++) {
-//         newRow[`col${colIndex}`] = '';
-//       }
-//       return newRow;
-//     });
-    
-//     setEditableData(clearedRows);
-//   };
-
   const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     setMarkdownInput(e.target.value);
   };
+
+  // Clipboard copy on Ctrl+C
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+        // Only copy if focus is not in textarea (markdown input)
+        const active = document.activeElement;
+        if (active && (active.tagName === 'TEXTAREA' || (active as HTMLElement).isContentEditable)) return;
+
+        e.preventDefault();
+        if (selectedCells) {
+          copySelectedCells();
+        } else {
+          copyToClipboard();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedCells, editableData, gridSize]);
 
   return (
     <div className="excel-viewer">
