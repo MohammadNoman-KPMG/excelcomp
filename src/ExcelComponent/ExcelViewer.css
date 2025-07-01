@@ -572,6 +572,43 @@ h2, h3 {
   color: #007bff;
 }
 
+/* Filename input styling */
+.filename-container {
+  display: flex;
+  align-items: center;
+  margin-right: 15px;
+}
+
+.filename-label {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #495057;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.filename-input {
+  margin-left: 8px;
+  padding: 6px 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 180px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filename-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.filename-input::placeholder {
+  color: #6c757d;
+  font-style: italic;
+}
+
 /* Layout adjustments when headers are hidden */
 .advanced-cell.no-headers {
   border-left: 1px solid #e9ecef;
@@ -609,9 +646,14 @@ h2, h3 {
     gap: 8px;
   }
   
+  .filename-container,
   .checkbox-container {
     margin-right: 0;
     margin-bottom: 10px;
+  }
+  
+  .filename-input {
+    width: 150px;
   }
   
   .markdown-input {

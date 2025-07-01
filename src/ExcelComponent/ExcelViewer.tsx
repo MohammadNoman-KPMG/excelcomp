@@ -39,6 +39,7 @@ This is a sample markdown table that will be converted to Excel view.`);
   const [sortConfig, setSortConfig] = useState<{column: number, direction: 'asc' | 'desc'} | null>(null);
   const [columnWidths, setColumnWidths] = useState<number[]>(Array(10).fill(120));
   const [showHeaders, setShowHeaders] = useState<boolean>(true);
+  const [fileName, setFileName] = useState<string>('');
   const gridRef = useRef<HTMLDivElement>(null);
 
   // Generate Excel-like column letters (A, B, C, ..., Z, AA, AB, etc.)
@@ -210,7 +211,12 @@ This is a sample markdown table that will be converted to Excel view.`);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
     
-    XLSX.writeFile(wb, "excel-data.xlsx");
+    // Use custom filename if provided, otherwise use default
+    const finalFileName = fileName.trim() ? 
+      (fileName.trim().endsWith('.xlsx') ? fileName.trim() : `${fileName.trim()}.xlsx`) : 
+      'excel-data.xlsx';
+    
+    XLSX.writeFile(wb, finalFileName);
   };
 
   // Copy grid data to clipboard in Excel-compatible format
@@ -433,6 +439,18 @@ This is a sample markdown table that will be converted to Excel view.`);
         <div className="excel-header">
           <h2>Advanced Excel View</h2>
           <div className="excel-controls">
+            <div className="filename-container">
+              <label className="filename-label">
+                File Name:
+                <input
+                  type="text"
+                  value={fileName}
+                  onChange={(e) => setFileName(e.target.value)}
+                  placeholder="excel-data (optional)"
+                  className="filename-input"
+                />
+              </label>
+            </div>
             <div className="checkbox-container">
               <label className="checkbox-label">
                 <input
