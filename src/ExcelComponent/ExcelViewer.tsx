@@ -692,6 +692,7 @@ This is a sample markdown table that will be converted to Excel view.`
         </div>
 
         <div className="excel-controls">
+
           {/* Only show controls if not in read-only mode */}
           {!readOnly && (
             <>
