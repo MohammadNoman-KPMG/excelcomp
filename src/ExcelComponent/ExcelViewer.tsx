@@ -201,11 +201,11 @@ This is a sample markdown table that will be converted to Excel view.`);
   }, [rows]);
 
   // Handle cell value change
-  const handleCellChange = (rowIndex: number, colKey: string, value: string) => {
-    const updatedData = [...editableData];
-    updatedData[rowIndex] = { ...updatedData[rowIndex], [colKey]: value };
-    setEditableData(updatedData);
-  };
+//   const handleCellChange = (rowIndex: number, colKey: string, value: string) => {
+//     const updatedData = [...editableData];
+//     updatedData[rowIndex] = { ...updatedData[rowIndex], [colKey]: value };
+//     setEditableData(updatedData);
+//   };
 
   // Download as Excel file
   const downloadExcel = (): void => {
@@ -420,10 +420,16 @@ This is a sample markdown table that will be converted to Excel view.`);
           onChange={handleMarkdownChange}
           placeholder="Enter your markdown with tables here..."
           className="markdown-input"
-        />
-        
-        <div className="grid-size-inputs">
-          <div className="size-input-container">
+        />        
+      </div>
+
+      <div className="excel-section">
+        <div className="excel-header">
+          <h2>Advanced Excel View</h2>
+          <div className="excel-controls">
+            
+            <div className="filename-container">
+                <div className="size-input-container">
             <label className="size-label">
               Min Rows:
               <input
@@ -451,16 +457,8 @@ This is a sample markdown table that will be converted to Excel view.`);
               />
             </label>
           </div>
-        </div>
-      </div>
-
-      <div className="excel-section">
-        <div className="excel-header">
-          <h2>Advanced Excel View</h2>
-          <div className="excel-controls">
-            <div className="filename-container">
               <label className="filename-label">
-                File Name:
+                File: 
                 <input
                   type="text"
                   value={fileName}
@@ -470,6 +468,7 @@ This is a sample markdown table that will be converted to Excel view.`);
                 />
               </label>
             </div>
+            
             <div className="checkbox-container">
               <label className="checkbox-label">
                 <input
@@ -478,17 +477,17 @@ This is a sample markdown table that will be converted to Excel view.`);
                   onChange={(e) => setShowHeaders(e.target.checked)}
                   className="header-checkbox"
                 />
-                Show Column & Row Headers
+                Show Header
               </label>
             </div>
-            <button onClick={copySelectedCells} className="btn btn-info" disabled={!selectedCells}>
+            {/* <button onClick={copySelectedCells} className="btn btn-info" disabled={!selectedCells}>
               Copy Selected
-            </button>
-            <button onClick={copyToClipboard} className="btn btn-info">
+            </button> */}
+            {/* <button onClick={copyToClipboard} className="btn btn-info">
               Copy All
-            </button>
+            </button> */}
             <button onClick={downloadExcel} className="btn btn-success">
-              Download Excel
+              Download
             </button>
           </div>
         </div>
