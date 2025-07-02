@@ -1,6 +1,10 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import './ExcelViewer.css';
+import Box from '@mui/material/Box';
+import Checkbox from '@mui/material/Checkbox';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 
 // Minimal type definitions
 interface GridSize {
@@ -450,107 +454,152 @@ const sortData = (columnIndex: number) => {
 
 
   return (
-    <div className="excel-viewer">
-      <div className="excel-section">
-        <div className="excel-controls">
-          {/* Only show controls if not in read-only mode */}
-            <div className="checkbox-container">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={showHeaders}
-                  onChange={(e) => setShowHeaders(e.target.checked)}
-                  className="header-checkbox"
-                />
-                Show Header
-              </label>
-            </div>
-          <button onClick={handleGenerateExcel} className="btn btn-success">
-            Download Excel
-          </button>
-        </div>
-
-        <div 
-          className="advanced-excel-grid"
-          ref={gridRef}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        >
-          {/* Column Headers - Conditionally Rendered */}
-          {showHeaders && (
-            <div className="excel-row header-row">
-              <div className="excel-cell row-header"></div>
-              {Array.from({ length: gridSize.cols }, (_, colIndex) => (
-                <div 
-                  key={colIndex} 
-                  className="excel-cell column-header sortable"
-                  style={{ width: columnWidths[colIndex] }}
-                  onClick={() => sortData(colIndex)}
-                >
-                  <span>{getColumnLetter(colIndex)}</span>
+    <Box className="excel-viewer-container">
+      <Stack direction="row" spacing={2} alignItems="center" justifyContent="flex-start" className="excel-controls" sx={{ mb: 2 }}>
+        <Checkbox
+          checked={showHeaders}
+          onChange={(e) => setShowHeaders(e.target.checked)}
+          color="primary"
+          inputProps={{ 'aria-label': 'Show Header' }}
+        />
+        Show Header
+        <Button variant="contained" color="primary" onClick={handleGenerateExcel}>
+          Download Excel
+        </Button>
+      </Stack>
+      <Box
+        className="advanced-excel-grid"
+        ref={gridRef}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        sx={{
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 10,
+          // overflow: 'auto',
+          bgcolor: 'background.paper',
+          p: 1,
+          maxHeight: 600, // or any height you want for scroll
+        }}
+      >
+        {/* Column Headers - Conditionally Rendered */}
+        {showHeaders && (
+          <Stack direction="row" className="excel-row header-row" sx={{ minHeight: 40 }}>
+            <Box className="excel-cell row-header" sx={{ width: 40, minWidth: 40, bgcolor: 'grey.100', borderRight: 1, borderColor: 'divider' }}></Box>
+            {Array.from({ length: gridSize.cols }, (_, colIndex) => (
+              <Box
+                key={colIndex}
+                className="excel-cell column-header sortable"
+                sx={{
+                  width: columnWidths[colIndex] || 120,
+                  minWidth: 80,
+                  bgcolor: 'grey.100',
+                  borderRight: 1,
+                  borderColor: 'divider',
+                  display: 'flex',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  userSelect: 'none'
+                }}
+                onClick={() => sortData(colIndex)}
+              >
+                <Box component="span" sx={{ flexGrow: 1 }}>
+                  {getColumnLetter(colIndex)}
                   {sortConfig?.column === colIndex && (
-                    <span className="sort-indicator">
-                      {sortConfig.direction === 'asc' ? ' ↑' : ' ↓'}
-                    </span>
+                    <Box component="span" className="sort-indicator" sx={{ ml: 0.5 }}>
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                    </Box>
                   )}
-                  <div 
-                    className="column-resizer"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      const startX = e.clientX;
-                      const startWidth = columnWidths[colIndex];
-                      
-                      const handleMouseMove = (e: MouseEvent) => {
-                        const newWidth = startWidth + (e.clientX - startX);
-                        handleColumnResize(colIndex, newWidth);
-                      };
-                      
-                      const handleMouseUp = () => {
-                        document.removeEventListener('mousemove', handleMouseMove);
-                        document.removeEventListener('mouseup', handleMouseUp);
-                      };
-                      
-                      document.addEventListener('mousemove', handleMouseMove);
-                      document.addEventListener('mouseup', handleMouseUp);
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Data Rows */}
-          {editableData.map((row, rowIndex) => (
-            <div key={rowIndex} className="excel-row">
-              {/* Row Number - Conditionally Rendered */}
-              {showHeaders && (
-                <div className="excel-cell row-header">{rowIndex + 1}</div>
-              )}
-              
-              {/* Data Cells */}
-              {Array.from({ length: gridSize.cols }, (_, colIndex) => (
-                <div 
-                  key={colIndex} 
-                  className={`excel-cell data-cell advanced-cell ${
-                    isCellSelected(rowIndex, colIndex) ? 'selected' : ''
-                  } ${!showHeaders ? 'no-headers' : ''}`}
-                  style={{ 
-                    width: columnWidths[colIndex] || 120,
-                    minWidth: '80px' // Ensure minimum width for grid lines
+                </Box>
+                <Box
+                  className="column-resizer"
+                  sx={{
+                    position: 'absolute',
+                    right: 0,
+                    top: 0,
+                    height: '100%',
+                    width: 6,
+                    cursor: 'col-resize',
+                    zIndex: 2,
                   }}
-                  onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
-                  onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
-                >
-                  <span className="cell-content">
-                    {row[`col${colIndex}`] || ''}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    const startX = e.clientX;
+                    const startWidth = columnWidths[colIndex];
+
+                    const handleMouseMove = (e: MouseEvent) => {
+                      const newWidth = startWidth + (e.clientX - startX);
+                      handleColumnResize(colIndex, newWidth);
+                    };
+
+                    const handleMouseUp = () => {
+                      document.removeEventListener('mousemove', handleMouseMove);
+                      document.removeEventListener('mouseup', handleMouseUp);
+                    };
+
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                  }}
+                />
+              </Box>
+            ))}
+          </Stack>
+        )}
+
+        {/* Data Rows */}
+        {editableData.map((row, rowIndex) => (
+          <Stack key={rowIndex} direction="row" className="excel-row" sx={{ minHeight: 36 }}>
+            {showHeaders && (
+              <Box
+                className="excel-cell row-header"
+                sx={{
+                  width: 40,
+                  minWidth: 40,
+                  bgcolor: 'grey.50',
+                  borderRight: 1,
+                  borderColor: 'divider',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center'
+                }}
+              >
+                {rowIndex + 1}
+              </Box>
+            )}
+            {Array.from({ length: gridSize.cols }, (_, colIndex) => (
+              <Box
+                key={colIndex}
+                className={`excel-cell data-cell advanced-cell ${
+                  isCellSelected(rowIndex, colIndex) ? 'selected' : ''
+                } ${!showHeaders ? 'no-headers' : ''}`}
+                sx={{
+                  width: columnWidths[colIndex] || 120,
+                  minWidth: 80,
+                  borderRight: 1,
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                  bgcolor: isCellSelected(rowIndex, colIndex) ? 'primary.light' : 'background.paper',
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: 1,
+                  cursor: 'pointer',
+                  userSelect: 'none'
+                }}
+                onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
+                onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
+              >
+                <Box className="cell-content" sx={{ width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {row[`col${colIndex}`] || ''}
+                </Box>
+              </Box>
+            ))}
+          </Stack>
+        ))}
+      </Box>
+    </Box>
   );
 };
 
