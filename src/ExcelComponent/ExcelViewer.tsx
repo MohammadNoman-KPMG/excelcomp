@@ -147,7 +147,7 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
       
       // Calculate required rows (header + data rows + buffer)
       const dataRowCount = table.length; // includes header
-      requiredRows = Math.max(dataRowCount + 5, defaultMinRows); // +5 for buffer
+      requiredRows = Math.max(dataRowCount, defaultMinRows); 
     }
 
     // Update column widths array to match required columns
