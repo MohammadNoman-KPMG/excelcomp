@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
-import { generateExcelFromMarkdown } from './ExcelComponent/ExcelViewer.tsx';
+// import { generateExcelFromMarkdown } from './ExcelComponent/ExcelViewer.tsx';
 import ExcelViewer from './ExcelComponent/ExcelViewer.tsx';
 
 function App() {
@@ -18,23 +18,6 @@ function App() {
   const [fileName, setFileName] = useState('');
   const [showHeaders, setShowHeaders] = useState(true);
 
-  // Handle quick generation with minimal parameters
-  const handleQuickGenerate = () => {
-    generateExcelFromMarkdown({
-      markdownData: markdownData
-    });
-  };
-
-  // Handle generation with all custom parameters
-  const handleCustomGenerate = () => {
-    generateExcelFromMarkdown({
-      markdownData: markdownData,
-      minRows: parseInt(minRows) || 20,
-      minCols: parseInt(minCols) || 10,
-      fileName: fileName,
-      showHeaders: showHeaders
-    });
-  };
 
   return (
     <div className="App">
