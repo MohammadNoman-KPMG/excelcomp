@@ -225,6 +225,32 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
   }, [rows]);
 
 
+  const downloadExcel = (): void => {
+    if (editableData.length === 0) return;
+    
+    // Create headers array
+    const headers = Array.from({ length: gridSize.cols }, (_, index) => getColumnLetter(index));
+    
+    // Convert data to worksheet format
+    const wsData: any[][] = [
+      headers, // Column headers
+      ...editableData.map((row: RowData) => 
+        headers.map((_, colIndex) => row[`col${colIndex}`] || '')
+      )
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    
+    // Use custom filename if provided, otherwise use default
+    const finalFileName = fileName.trim() ? 
+      (fileName.trim().endsWith('.xlsx') ? fileName.trim() : `${fileName.trim()}.xlsx`) : 
+      'excel-data.xlsx';
+    
+    XLSX.writeFile(wb, finalFileName);
+  };
+
 
   // Copy grid data to clipboard in Excel-compatible format
   const copyToClipboard = async (): Promise<void> => {
@@ -369,17 +395,9 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
   }, [selectedCells, editableData, gridSize]);
 
   // Function to use the main function with current form values
-  const handleGenerateExcel = useCallback(() => {
-    const options: ExcelGeneratorOptions = {
-      markdownData: markdownInput,
-      minRows: parseInt(minRows) || 20,
-      minCols: parseInt(minCols) || 10,
-      fileName: fileName,
-      showHeaders: showHeaders
-    };
-
-    generateExcelFromMarkdown(options);
-  }, [markdownInput, minRows, minCols, fileName, showHeaders, generateExcelFromMarkdown]);
+    const handleGenerateExcel = useCallback(() => {
+      downloadExcel();
+    }, [editableData, gridSize, fileName]);
 
 
   return (
@@ -489,139 +507,6 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
   );
 };
 
-// Export the main function for external use
-export const generateExcelFromMarkdown = (options: ExcelGeneratorOptions) => {
-  // Helper function implementation (same as above)
-  const getColumnLetter = (index: number): string => {
-    let result = '';
-    while (index >= 0) {
-      result = String.fromCharCode(65 + (index % 26)) + result;
-      index = Math.floor(index / 26) - 1;
-    }
-    return result;
-  };
-
-  const parseMarkdownTables = (markdown: string): string[][] => {
-    const lines = markdown.split('\n');
-    const tables: string[][][] = [];
-    
-    let currentTable: string[][] = [];
-    let isInTable = false;
-    
-    for (let line of lines) {
-      if (line.includes('|') && line.trim() !== '') {
-        if (line.includes('---')) {
-          continue;
-        }
-        
-        const cells = line.split('|')
-          .map(cell => cell.trim())
-          .filter(cell => cell !== '');
-        
-        if (cells.length > 0) {
-          currentTable.push(cells);
-          isInTable = true;
-        }
-      } else if (isInTable && currentTable.length > 0) {
-        tables.push(currentTable);
-        currentTable = [];
-        isInTable = false;
-      }
-    }
-    
-    if (currentTable.length > 0) {
-      tables.push(currentTable);
-    }
-    
-    return tables.length > 0 ? tables[0] : [];
-  };
-
-  const {
-    markdownData,
-    minRows = 20,
-    minCols = 10,
-    fileName = 'excel-data',
-    showHeaders = true
-  } = options;
-
-  // Calculate required dimensions
-  let requiredCols = minCols;
-  let requiredRows = minRows;
-  
-  const table = parseMarkdownTables(markdownData);
-  
-  if (table.length > 0) {
-    const maxCols = Math.max(...table.map(row => row.length));
-    requiredCols = Math.max(maxCols, minCols);
-    const dataRowCount = table.length;
-    requiredRows = Math.max(dataRowCount + 5, minRows);
-  }
-
-  // Create grid data
-  const gridRows: RowData[] = Array.from({ length: requiredRows }, (_, rowIndex) => {
-    const rowData: RowData = { 
-      id: rowIndex,
-      rowNumber: rowIndex + 1
-    };
-    for (let colIndex = 0; colIndex < requiredCols; colIndex++) {
-      rowData[`col${colIndex}`] = '';
-    }
-    return rowData;
-  });
-
-  // Populate grid with markdown data
-  if (table.length > 0) {
-    const headers = table[0];
-    const dataRows = table.slice(1);
-    
-    headers.forEach((header: string, colIndex: number) => {
-      if (colIndex < requiredCols && gridRows[0]) {
-        gridRows[0][`col${colIndex}`] = header;
-      }
-    });
-    
-    dataRows.forEach((dataRow: string[], rowIndex: number) => {
-      const targetRowIndex = rowIndex + 1;
-      if (targetRowIndex < requiredRows) {
-        dataRow.forEach((cellValue: string, colIndex: number) => {
-          if (colIndex < requiredCols) {
-            gridRows[targetRowIndex][`col${colIndex}`] = cellValue || '';
-          }
-        });
-      }
-    });
-  }
-
-  // Prepare Excel data
-  const headers = showHeaders ? 
-    Array.from({ length: requiredCols }, (_, index) => getColumnLetter(index)) : 
-    [];
-  
-  const wsData: any[][] = showHeaders ? 
-    [headers, ...gridRows.map((row: RowData) => 
-      headers.map((_, colIndex) => row[`col${colIndex}`] || '')
-    )] :
-    gridRows.map((row: RowData) => 
-      Array.from({ length: requiredCols }, (_, colIndex) => row[`col${colIndex}`] || '')
-    );
-
-  // Generate Excel file
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-  
-  const finalFileName = fileName.trim() ? 
-    (fileName.trim().endsWith('.xlsx') ? fileName.trim() : `${fileName.trim()}.xlsx`) : 
-    'excel-data.xlsx';
-  
-  XLSX.writeFile(wb, finalFileName);
-
-  return {
-    gridData: gridRows,
-    dimensions: { rows: requiredRows, cols: requiredCols },
-    fileName: finalFileName
-  };
-};
 
 export default ExcelViewer;
 export type { ExcelGeneratorOptions, ExcelViewerProps };
