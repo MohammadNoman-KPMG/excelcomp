@@ -659,68 +659,20 @@ This is a sample markdown table that will be converted to Excel view.`
 
   return (
     <div className="excel-viewer">
-      {/* Only show input section if not in read-only mode */}
-      {!readOnly && (
-        <div className="input-section">
-          <h2>Markdown Input</h2>
-          <textarea
-            value={markdownInput}
-            onChange={handleMarkdownChange}
-            placeholder="Enter your markdown with tables here..."
-            className="markdown-input"
-          />        
-        </div>
-      )}
-
       <div className="excel-section">
-        {!readOnly && (
-          <div className="excel-header">
-            <h2>Advanced Excel View</h2>
-          </div>
-        )}
-        
-        <div className="grid-info">
-          <span>Grid Size: {gridSize.rows} rows × {gridSize.cols} columns</span>
-          <span className="min-size-info">
-            | Min Size: {parseInt(minRows) || 20} rows × {parseInt(minCols) || 10} columns
-          </span>
-          {selectedCells && (
-            <span className="selection-info">
-              | Selected: {Math.abs(selectedCells.endRow - selectedCells.startRow) + 1} rows × {Math.abs(selectedCells.endCol - selectedCells.startCol) + 1} columns
-            </span>
-          )}
-        </div>
-
         <div className="excel-controls">
-
           {/* Only show controls if not in read-only mode */}
-          {!readOnly && (
-            <>
-              <div className="checkbox-container">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={showHeaders}
-                    onChange={(e) => setShowHeaders(e.target.checked)}
-                    className="header-checkbox"
-                  />
-                  Show Header
-                </label>
-              </div>
-            </>
-          )}
-
-          {/* Always show download button */}
-          <div className="control-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={showHeaders}
-                onChange={(e) => setShowHeaders(e.target.checked)}
-              />
-              Show Headers
-            </label>
-          </div>
+            <div className="checkbox-container">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={showHeaders}
+                  onChange={(e) => setShowHeaders(e.target.checked)}
+                  className="header-checkbox"
+                />
+                Show Header
+              </label>
+            </div>
           <button onClick={handleGenerateExcel} className="btn btn-success">
             Download Excel
           </button>
