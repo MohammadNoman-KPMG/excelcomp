@@ -274,31 +274,92 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
     }
   };
 
-  // Advanced sorting function
-  const sortData = (columnIndex: number) => {
-    const direction = sortConfig?.column === columnIndex && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+  
+// Enhanced sorting function that preserves headers
+const sortDataArray = (data: RowData[], columnIndex: number, direction: 'asc' | 'desc'): RowData[] => {
+  // Function to detect if first row is likely a header
+  const isFirstRowHeader = (data: RowData[]): boolean => {
+    if (data.length === 0) return false;
     
-    const sortedData = [...editableData].sort((a, b) => {
-      const aVal = a[`col${columnIndex}`] || '';
-      const bVal = b[`col${columnIndex}`] || '';
+    const firstRow = data[0];
+    const secondRow = data[1];
+    
+    
+    // Check if first row values are different from numeric patterns in second row
+    for (let col = 0; col < gridSize.cols; col++) {
+      const firstVal = firstRow[`col${col}`] || '';
+      const secondVal = secondRow[`col${col}`] || '';
       
-      // Try to convert to numbers for numeric sorting
-      const aNum = parseFloat(aVal);
-      const bNum = parseFloat(bVal);
-      
-      if (!isNaN(aNum) && !isNaN(bNum)) {
-        return direction === 'asc' ? aNum - bNum : bNum - aNum;
+      // If second row has numbers but first row doesn't, likely header
+      if (secondVal && !isNaN(parseFloat(secondVal.toString().replace(/[,$%]/g, ''))) &&
+          firstVal && isNaN(parseFloat(firstVal.toString().replace(/[,$%]/g, '')))) {
+        return true;
       }
       
-      // String sorting
-      return direction === 'asc' 
-        ? aVal.toString().localeCompare(bVal.toString())
-        : bVal.toString().localeCompare(aVal.toString());
-    });
+      // If first row has typical header words
+      if (typeof firstVal === 'string' && 
+          /^(name|title|id|date|amount|price|quantity|total|status|type|category)$/i.test(firstVal.trim())) {
+        return true;
+      }
+    }
     
-    setEditableData(sortedData);
-    setSortConfig({ column: columnIndex, direction });
+    return false;
   };
+  if (data.length === 0) return data;
+  
+  const hasHeader = isFirstRowHeader(data);
+  const headerRow = hasHeader ? data[0] : null;
+  const dataRows = hasHeader ? data.slice(1) : data;
+  
+  const sortedDataRows = dataRows.sort((a, b) => {
+    const aVal = a[`col${columnIndex}`] || '';
+    const bVal = b[`col${columnIndex}`] || '';
+    
+    // Handle empty values - put them at the end
+    if (!aVal && !bVal) return 0;
+    if (!aVal) return 1;
+    if (!bVal) return -1;
+    
+    // Try date parsing first
+    const aDate = new Date(aVal);
+    const bDate = new Date(bVal);
+    const aIsValidDate = !isNaN(aDate.getTime()) && aVal.toString().match(/\d{1,4}[-/]\d{1,2}[-/]\d{1,4}/);
+    const bIsValidDate = !isNaN(bDate.getTime()) && bVal.toString().match(/\d{1,4}[-/]\d{1,2}[-/]\d{1,4}/);
+    
+    if (aIsValidDate && bIsValidDate) {
+      return direction === 'asc' ? aDate.getTime() - bDate.getTime() : bDate.getTime() - aDate.getTime();
+    }
+    
+    // Try numeric parsing
+    const aNum = parseFloat(aVal.toString().replace(/[,$%]/g, ''));
+    const bNum = parseFloat(bVal.toString().replace(/[,$%]/g, ''));
+    
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      return direction === 'asc' ? aNum - bNum : bNum - aNum;
+    }
+    
+    // String sorting with locale support
+    const aStr = aVal.toString().toLowerCase();
+    const bStr = bVal.toString().toLowerCase();
+    
+    return direction === 'asc' 
+      ? aStr.localeCompare(bStr, undefined, { numeric: true, sensitivity: 'base' })
+      : bStr.localeCompare(aStr, undefined, { numeric: true, sensitivity: 'base' });
+  });
+  
+  // Return header + sorted data, or just sorted data
+  return headerRow ? [headerRow, ...sortedDataRows] : sortedDataRows;
+};
+
+// Improved sorting function
+const sortData = (columnIndex: number) => {
+  const direction = sortConfig?.column === columnIndex && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+  
+  const sortedData = sortDataArray(editableData, columnIndex, direction);
+  
+  setEditableData(sortedData);
+  setSortConfig({ column: columnIndex, direction });
+};
 
   // Cell selection handlers
   const handleCellMouseDown = (rowIndex: number, colIndex: number) => {
