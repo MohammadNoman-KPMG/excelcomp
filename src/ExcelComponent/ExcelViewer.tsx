@@ -105,40 +105,67 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
   };
 
   // Parse markdown tables to extract data
+  // const parseMarkdownTables = (markdown: string): string[][] => {
+  //   const lines = markdown.split('\n');
+  //   const tables: string[][][] = [];
+    
+  //   let currentTable: string[][] = [];
+  //   let isInTable = false;
+    
+  //   for (let line of lines) {
+  //     if (line.includes('|') && line.trim() !== '') {
+  //       if (line.includes('---')) {
+  //         continue;
+  //       }
+        
+  //       const cells = line.split('|')
+  //         .map(cell => cell.trim())
+  //         .filter(cell => cell !== '');
+        
+  //       if (cells.length > 0) {
+  //         currentTable.push(cells);
+  //         isInTable = true;
+  //       }
+  //     } else if (isInTable && currentTable.length > 0) {
+  //       tables.push(currentTable);
+  //       currentTable = [];
+  //       isInTable = false;
+  //     }
+  //   }
+    
+  //   if (currentTable.length > 0) {
+  //     tables.push(currentTable);
+  //   }
+    
+  //   return tables.length > 0 ? tables[0] : [];
+  // };
+
+  function containsAlphanumeric(input: string): boolean {
+    const alphanumericRegex = /[a-zA-Z0-9]/;
+    return alphanumericRegex.test(input);
+  }
+
+
+  // Parse markdown tables to extract data
   const parseMarkdownTables = (markdown: string): string[][] => {
-    const lines = markdown.split('\n');
-    const tables: string[][][] = [];
-    
-    let currentTable: string[][] = [];
-    let isInTable = false;
-    
-    for (let line of lines) {
-      if (line.includes('|') && line.trim() !== '') {
-        if (line.includes('---')) {
-          continue;
-        }
-        
+    const lines = markdown.split("\n");
+    const table: string[][] = [];
+
+    for(let line of lines) {
+      line = line.trim();
+      if (line.includes('|') && containsAlphanumeric(line)) {
         const cells = line.split('|')
-          .map(cell => cell.trim())
-          .filter(cell => cell !== '');
-        
-        if (cells.length > 0) {
-          currentTable.push(cells);
-          isInTable = true;
-        }
-      } else if (isInTable && currentTable.length > 0) {
-        tables.push(currentTable);
-        currentTable = [];
-        isInTable = false;
+        .map(cell => cell.trim())
+        .filter(cell => cell !== '');
+      
+        table.push(cells);
+      }
+      else if (line == ""){
+        table.push([]); // Add empty row for blank lines
       }
     }
-    
-    if (currentTable.length > 0) {
-      tables.push(currentTable);
-    }
-    
-    return tables.length > 0 ? tables[0] : [];
-  };
+    return table.length > 0 ? table: [];
+  }
 
   // Create Excel-like grid structure
   const { columns, rows } = useMemo(() => {
